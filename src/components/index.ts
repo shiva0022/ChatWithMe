@@ -15,6 +15,7 @@ export { default as RememberMe } from './RememberMe';
 // Authentication Components
 export { default as AuthButtons } from './AuthButtons';
 export { default as Account } from './Account';
+export { default as NextAuthProvider } from './NextAuthProvider';
 
 // Chat Components
 export { default as ChatResponse } from './ChatResponse';

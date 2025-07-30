@@ -1,19 +1,12 @@
 'use client';
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 import AuthButtons from "./AuthButtons";
 import Account from "./Account";
 
 const Navbar: React.FC = () => {
-  const [isLogged, setIsLogged] = useState(false);
-
-  useEffect(() => {
-    // TODO: Replace with NextAuth session check
-    const token = localStorage.getItem("token");
-    if (token) {
-      setIsLogged(true);
-    }
-  }, []);
+  const { data: session, status } = useSession();
 
   return (
     <header className="h-16 px-6 relative">
@@ -38,7 +31,13 @@ const Navbar: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          {!isLogged ? <AuthButtons /> : <Account setIsLogged={setIsLogged} />}
+          {status === "loading" ? (
+            <div className="w-8 h-8 border-2 border-[#a970ff]/20 border-t-[#a970ff] rounded-full animate-spin"></div>
+          ) : session ? (
+            <Account session={session} />
+          ) : (
+            <AuthButtons />
+          )}
         </div>
       </nav>
     </header>

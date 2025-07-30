@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import NextAuthProvider from "@/components/NextAuthProvider";
+import { ChatProvider } from "@/contexts/ChatContext";
 
 export const metadata: Metadata = {
   title: "ChatWithMe - Your AI Assistant",
@@ -14,7 +16,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        {children}
+        <NextAuthProvider>
+          <ChatProvider>
+            {children}
+          </ChatProvider>
+        </NextAuthProvider>
       </body>
     </html>
   );

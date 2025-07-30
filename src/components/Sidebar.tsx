@@ -1,12 +1,35 @@
 'use client';
-import React from "react";
+import React, { useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useChat } from "@/contexts/ChatContext";
+import { ChatService } from "@/services/chatService";
 import Log from "./Log";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { BookOpenIcon } from "@heroicons/react/24/solid";
 
 const Sidebar: React.FC = () => {
+  const { data: session } = useSession();
+  const { state, dispatch } = useChat();
+
+  // Load chat history when component mounts
+  useEffect(() => {
+    if (session) {
+      loadChatHistory();
+    }
+  }, [session]);
+
+  const loadChatHistory = async () => {
+    try {
+      const response = await ChatService.getChatHistory();
+      dispatch({ type: 'SET_CHAT_HISTORY', payload: response.chats });
+    } catch (error) {
+      console.error('Failed to load chat history:', error);
+    }
+  };
+
   const handleNewChat = () => {
-    alert("new Chat");
+    dispatch({ type: 'CLEAR_CURRENT_CHAT' });
+    dispatch({ type: 'SET_ERROR', payload: null });
   };
 
   return (
@@ -16,9 +39,10 @@ const Sidebar: React.FC = () => {
       <div className="flex items-center justify-between p-4 border-b border-[#a970ff]/10 relative">
         <h1 className="text-lg font-semibold bg-gradient-to-r from-[#a970ff] via-[#8a4fff] to-[#6a3fff] text-transparent bg-clip-text">New Chat</h1>
         <button
-          className="cursor-pointer rounded-full bg-gradient-to-r from-[#a970ff] via-[#8a4fff] to-[#6a3fff] w-8 h-8 flex items-center justify-center hover:scale-105 transition-transform duration-200 shadow-lg hover:shadow-[#a970ff]/20"
+          className="cursor-pointer rounded-full bg-gradient-to-r from-[#a970ff] via-[#8a4fff] to-[#6a3fff] w-8 h-8 flex items-center justify-center hover:scale-105 transition-transform duration-200 shadow-lg hover:shadow-[#a970ff]/20 disabled:opacity-50 disabled:cursor-not-allowed"
           type="button"
           onClick={handleNewChat}
+          disabled={!session}
         >
           <PlusIcon className="w-5 h-5 text-white" strokeWidth={2.5} />
         </button>
@@ -31,9 +55,23 @@ const Sidebar: React.FC = () => {
       
       <div className="flex-1 overflow-y-auto relative [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-[#1a1a1a] [&::-webkit-scrollbar-thumb]:bg-[#a970ff] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#8a4fff] [&::-webkit-scrollbar]:opacity-0 group-hover:[&::-webkit-scrollbar]:opacity-100 transition-opacity duration-200">
         <div className="flex flex-col gap-1.5 p-3">
-          {Array.from({ length: 25 }).map((_, i) => (
-            <Log key={i} />
-          ))}
+          {session ? (
+            state.chatHistory.length > 0 ? (
+              state.chatHistory.map((chat) => (
+                <Log key={chat.id} chat={chat} />
+              ))
+            ) : (
+              <div className="text-center text-gray-500 text-sm py-8">
+                <p>No chat history yet.</p>
+                <p>Start a conversation!</p>
+              </div>
+            )
+          ) : (
+            <div className="text-center text-gray-500 text-sm py-8">
+              <p>Please sign in to view</p>
+              <p>your chat history</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

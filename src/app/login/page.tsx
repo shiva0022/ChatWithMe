@@ -36,8 +36,7 @@ export default function Login() {
   };
 
   const handleGoogleSignIn = () => {
-    // TODO: Implement NextAuth Google sign in
-    alert("Google sign in - will be implemented with NextAuth");
+    // This is now handled by the GoogleButton component
   };
 
   return (
@@ -83,7 +82,6 @@ export default function Login() {
         <FormDivider text="Or continue with" />
 
         <GoogleButton 
-          onClick={handleGoogleSignIn}
           text="Sign in with Google"
           disabled={loading}
         />
