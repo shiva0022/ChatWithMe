@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { v4 as uuidv4 } from 'uuid';
-import { OpenAIService } from '@/services/openaiService';
+import { GroqService } from '@/services/groqService';
 
-// Fallback AI response function for when OpenAI is not configured
+// Fallback AI response function for when Groq is not configured
 async function generateFallbackResponse(message: string): Promise<string> {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
@@ -28,23 +28,21 @@ async function generateFallbackResponse(message: string): Promise<string> {
   return responses.default;
 }
 
-// Generate AI response using OpenAI or fallback
+// Generate AI response using Groq or fallback
 async function generateAIResponse(message: string, conversationHistory: any[] = []): Promise<string> {
-  if (OpenAIService.isConfigured()) {
+  if (GroqService.isConfigured()) {
     try {
-      // Convert conversation history to OpenAI format
       const chatHistory = conversationHistory.map(msg => ({
         role: msg.sender === 'user' ? 'user' : 'assistant',
         content: msg.content
       }));
-      
-      return await OpenAIService.generateResponse(message, chatHistory);
+      return await GroqService.generateResponse(message, chatHistory);
     } catch (error) {
-      console.error('OpenAI failed, using fallback:', error);
+      console.error('Groq failed, using fallback:', error);
       return await generateFallbackResponse(message);
     }
   } else {
-    console.log('OpenAI not configured, using fallback responses');
+    console.log('Groq not configured, using fallback responses');
     return await generateFallbackResponse(message);
   }
 }
