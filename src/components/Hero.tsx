@@ -12,7 +12,7 @@ const Hero: React.FC = () => {
         <ChatResponse />
       </div>
 
-      <div className="p-4 border-t border-[#a970ff]/10 relative">
+      <div className="p-4 relative">
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent"></div>
         <SearchInput />
       </div>

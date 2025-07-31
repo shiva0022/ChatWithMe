@@ -4,10 +4,13 @@ import { RocketLaunchIcon } from "@heroicons/react/24/solid";
 import { useSession } from "next-auth/react";
 import { useChat } from "@/contexts/ChatContext";
 import { ChatService } from "@/services/chatService";
+import ModelSelector from "./ModelSelector";
+import { ModelType } from "@/services/modelRouterService";
 
 const SearchInput: React.FC = () => {
   const [inputValue, setInputValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<string>("groq");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { data: session } = useSession();
   const { state, dispatch } = useChat();
@@ -55,8 +58,8 @@ const SearchInput: React.FC = () => {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'SET_ERROR', payload: null });
 
-      // Send message to API
-      const response = await ChatService.sendMessage(message, state.currentChatId);
+      // Send message to API with selected model
+      const response = await ChatService.sendMessage(message, state.currentChatId, selectedModel as ModelType);
       
       // Update chat state
       dispatch({ type: 'SET_CURRENT_CHAT', payload: response.chatId });
@@ -87,6 +90,14 @@ const SearchInput: React.FC = () => {
           {state.error}
         </div>
       )}
+      
+      {/* Floating Model Selector */}
+      <div className="mb-4 flex justify-start">
+        <ModelSelector
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
+        />
+      </div>
       
       <form className="flex gap-4 items-center" onSubmit={handleSubmit}>
         <div className="w-full bg-[#0a0a0a]/50 border border-[#a970ff]/10 rounded-2xl p-3 pl-5 transition-all duration-300 hover:border-[#a970ff]/20 focus-within:border-[#a970ff] focus-within:ring-2 focus-within:ring-[#a970ff]/20">

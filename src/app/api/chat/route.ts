@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { v4 as uuidv4 } from 'uuid';
-import { GroqService } from '@/services/groqService';
+import { ModelRouterService, ModelType } from '@/services/modelRouterService';
 
 // Fallback AI response function for when Groq is not configured
 async function generateFallbackResponse(message: string): Promise<string> {
@@ -28,23 +28,18 @@ async function generateFallbackResponse(message: string): Promise<string> {
   return responses.default;
 }
 
-// Generate AI response using Groq or fallback
-async function generateAIResponse(message: string, conversationHistory: any[] = []): Promise<string> {
-  if (GroqService.isConfigured()) {
-    try {
-      const chatHistory = conversationHistory.map(msg => ({
-        role: msg.sender === 'user' ? 'user' : 'assistant',
-        content: msg.content
-      }));
-      return await GroqService.generateResponse(message, chatHistory);
-    } catch (error) {
-      console.error('Groq failed, using fallback:', error);
-      return await generateFallbackResponse(message);
-    }
-  } else {
-    console.log('Groq not configured, using fallback responses');
-    return await generateFallbackResponse(message);
-  }
+// Generate AI response using selected model
+async function generateAIResponse(
+  message: string, 
+  model: ModelType = 'groq',
+  conversationHistory: any[] = []
+): Promise<{ response: string; model: ModelType }> {
+  const chatHistory = conversationHistory.map(msg => ({
+    role: msg.sender === 'user' ? 'user' : 'assistant',
+    content: msg.content
+  }));
+  
+  return await ModelRouterService.generateResponse(model, message, chatHistory);
 }
 
 export async function POST(request: NextRequest) {
@@ -59,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse request body
-    const { message, chatId } = await request.json();
+    const { message, chatId, model = 'groq' } = await request.json();
     
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return NextResponse.json(
@@ -67,6 +62,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Validate model
+    const validModels: ModelType[] = ['groq', 'gemini', 'rag'];
+    const selectedModel: ModelType = validModels.includes(model as ModelType) ? model as ModelType : 'groq';
 
     // Generate unique IDs
     const userMessageId = uuidv4();
@@ -90,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     // Generate AI response (pass empty history for now - in production you'd load chat history)
     const conversationHistory: any[] = []; // TODO: Load actual conversation history from database
-    const aiResponse = await generateAIResponse(message.trim(), conversationHistory);
+    const { response: aiResponse, model: usedModel } = await generateAIResponse(message.trim(), selectedModel, conversationHistory);
 
     // Create AI message
     const aiMessage = {
@@ -99,6 +98,7 @@ export async function POST(request: NextRequest) {
       sender: 'assistant',
       content: aiResponse,
       timestamp: new Date().toISOString(),
+      model: usedModel, // Include which model was used
       user: {
         name: 'ChatWithMe AI',
         email: 'ai@chatwithme.com',
@@ -111,7 +111,8 @@ export async function POST(request: NextRequest) {
       success: true,
       chatId: currentChatId,
       messages: [userMessage, aiMessage],
-      user: session.user
+      user: session.user,
+      modelUsed: usedModel
     });
 
   } catch (error) {

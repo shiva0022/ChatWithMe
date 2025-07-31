@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { ChatResponse, ChatHistoryResponse } from '@/types/chat';
+import { ModelType } from './modelRouterService';
 
 const API_BASE_URL = '/api';
 
@@ -7,11 +8,12 @@ export class ChatService {
   /**
    * Send a message to the chat API
    */
-  static async sendMessage(message: string, chatId?: string): Promise<ChatResponse> {
+  static async sendMessage(message: string, chatId?: string, model: ModelType = 'groq'): Promise<ChatResponse> {
     try {
       const response = await axios.post(`${API_BASE_URL}/chat`, {
         message,
-        chatId
+        chatId,
+        model
       });
       return response.data;
     } catch (error) {
