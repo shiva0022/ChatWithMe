@@ -167,77 +167,11 @@ const ResponseItem: React.FC<ResponseItemProps> = ({ message }) => {
 const Responses: React.FC = () => {
   const { state } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [visibleMessages, setVisibleMessages] = useState<Set<string>>(new Set());
-  const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // Auto-scroll to bottom when new messages arrive and mark them as visible immediately
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    
-    // Mark new messages as visible immediately to prevent animation on new messages
-    if (state.messages.length > 0) {
-      const newMessageIds = state.messages.map(msg => msg.id);
-      setVisibleMessages(prev => {
-        const newSet = new Set(prev);
-        newMessageIds.forEach(id => newSet.add(id));
-        return newSet;
-      });
-    }
   }, [state.messages]);
-
-  // Set up intersection observer for scroll animations
-  useEffect(() => {
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
-            const messageId = entry.target.getAttribute('data-message-id');
-            if (messageId) {
-              setVisibleMessages(prev => new Set([...prev, messageId]));
-            }
-          } else {
-            // Remove from visible when not intersecting enough
-            const messageId = entry.target.getAttribute('data-message-id');
-            if (messageId) {
-              setVisibleMessages(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(messageId);
-                return newSet;
-              });
-            }
-          }
-        });
-      },
-      {
-        threshold: [0.2, 0.5, 0.8],
-        rootMargin: '10px 0px'
-      }
-    );
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, []);
-
-  // Observe message elements
-  const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-
-  const setMessageRef = (messageId: string) => (el: HTMLDivElement | null) => {
-    if (el) {
-      messageRefs.current.set(messageId, el);
-      if (observerRef.current) {
-        observerRef.current.observe(el);
-      }
-    } else {
-      const existingEl = messageRefs.current.get(messageId);
-      if (existingEl && observerRef.current) {
-        observerRef.current.unobserve(existingEl);
-      }
-      messageRefs.current.delete(messageId);
-    }
-  };
 
   return (
     <div className="h-full w-full overflow-y-auto px-6 py-6 scroll-smooth custom-scrollbar">
@@ -245,15 +179,9 @@ const Responses: React.FC = () => {
         {state.messages.map((message, index) => (
           <div 
             key={message.id} 
-            ref={setMessageRef(message.id)}
-            data-message-id={message.id}
-            className={`transform transition-all duration-600 ease-out ${
-              visibleMessages.has(message.id) 
-                ? 'translate-y-0 opacity-100' 
-                : 'translate-y-3 opacity-0'
-            }`}
+            className="animate-fade-in"
             style={{ 
-              transitionDelay: '0s'
+              animationDelay: `${index * 100}ms`
             }}
           >
             <ResponseItem message={message} />
@@ -261,7 +189,7 @@ const Responses: React.FC = () => {
         ))}
         
         {state.isLoading && (
-          <div className="flex justify-start mb-8 animate-fade-in transform translate-y-0 opacity-100 transition-all duration-500">
+          <div className="flex justify-start mb-8 animate-fade-in">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#a970ff] via-[#8a4fff] to-[#6a3fff] text-white flex items-center justify-center font-bold mr-4 shadow-lg shadow-[#a970ff]/30 flex-shrink-0 animate-pulse relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
               <span className="relative z-10 animate-bounce">AI</span>
