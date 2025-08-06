@@ -136,3 +136,8 @@ code {
 .group:hover button {
   transform: translateY(0);
 }
+
+/* Custom animation delays for loading spinner */
+.animation-delay-150 {
+  animation-delay: 150ms;
+}

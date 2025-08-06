@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { useChat } from "@/contexts/ChatContext";
 import { ChatService } from "@/services/chatService";

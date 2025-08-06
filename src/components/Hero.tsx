@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import ChatResponse from "./ChatResponse";
 import SearchInput from "./SearchInput";
 import ModelSelector from "./ModelSelector";

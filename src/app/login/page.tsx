@@ -2,12 +2,14 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import FormContainer from "@/components/FormContainer";
+import AuthAnimatedLayout from "@/components/AuthAnimatedLayout";
+import AnimatedFormContainer from "@/components/AnimatedFormContainer";
 import FormInput from "@/components/FormInput";
 import RememberMe from "@/components/RememberMe";
 import SubmitButton from "@/components/SubmitButton";
 import FormDivider from "@/components/FormDivider";
 import GoogleButton from "@/components/GoogleButton";
+import { motion } from 'framer-motion';
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -39,10 +41,44 @@ export default function Login() {
     // This is now handled by the GoogleButton component
   };
 
+  // Animation variants for form elements - simplified to prevent glitches
+  const formVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.06,
+        delayChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { 
+      opacity: 0,
+      y: 8
+    },
+    visible: { 
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.3,
+        ease: [0.25, 0.46, 0.45, 0.94]
+      }
+    }
+  };
+
   return (
-    <FormContainer title="Welcome Back">
-      <form onSubmit={handleSubmit} className="space-y-3 relative">
-        <div className="space-y-3">
+    <AuthAnimatedLayout>
+      <AnimatedFormContainer title="Welcome Back">
+        <motion.form 
+          onSubmit={handleSubmit} 
+          className="space-y-3 relative"
+          variants={formVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div className="space-y-3" variants={itemVariants}>
           <FormInput
             label="Email"
             id="email"
@@ -71,22 +107,34 @@ export default function Login() {
               {showPassword ? "Hide" : "Show"}
             </button>
           </div>
-        </div>
+        </motion.div>
 
-        <RememberMe />
-        <SubmitButton
-          text={loading ? "Signing In..." : "Sign In"}
-          disabled={loading}
-        />
+        <motion.div variants={itemVariants}>
+          <RememberMe />
+        </motion.div>
+        
+        <motion.div variants={itemVariants}>
+          <SubmitButton
+            text={loading ? "Signing In..." : "Sign In"}
+            disabled={loading}
+          />
+        </motion.div>
 
-        <FormDivider text="Or continue with" />
+        <motion.div variants={itemVariants}>
+          <FormDivider text="Or continue with" />
+        </motion.div>
 
-        <GoogleButton 
-          text="Sign in with Google"
-          disabled={loading}
-        />
+        <motion.div variants={itemVariants}>
+          <GoogleButton 
+            text="Sign in with Google"
+            disabled={loading}
+          />
+        </motion.div>
 
-        <p className="text-center text-gray-400 mt-4">
+        <motion.p 
+          className="text-center text-gray-400 mt-4"
+          variants={itemVariants}
+        >
           Don&apos;t have an account?{" "}
           <Link
             href="/register"
@@ -94,8 +142,9 @@ export default function Login() {
           >
             Sign up
           </Link>
-        </p>
-      </form>
-    </FormContainer>
+        </motion.p>
+      </motion.form>
+    </AnimatedFormContainer>
+    </AuthAnimatedLayout>
   );
 }

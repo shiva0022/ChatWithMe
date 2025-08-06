@@ -1,6 +1,7 @@
 'use client';
 import React from "react";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import AuthButtons from "./AuthButtons";
 import Account from "./Account";

@@ -1,4 +1,7 @@
 export { default as Account } from './Account';
+export { default as AnimatedFormContainer } from './AnimatedFormContainer';
+export { default as AnimatedLayout } from './AnimatedLayout';
+export { default as AuthAnimatedLayout } from './AuthAnimatedLayout';
 export { default as AuthButtons } from './AuthButtons';
 export { default as ChatHistorySkeleton } from './ChatHistorySkeleton';
 export { default as ChatResponse } from './ChatResponse';
