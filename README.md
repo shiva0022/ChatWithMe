@@ -43,7 +43,7 @@ src/
 │   │   ├── Sidebar.tsx
 │   │   └── Hero.tsx
 │   ├── Forms/            # Form components
-│   │   ├── FormContainer.tsx
+│   │   ├── AnimatedFormContainer.tsx
 │   │   ├── FormInput.tsx
 │   │   ├── GoogleButton.tsx
 │   │   └── SubmitButton.tsx
@@ -128,7 +128,7 @@ public/
 - **Hero**: Main chat interface container
 
 ### Form Components
-- **FormContainer**: Glassmorphism form wrapper
+- **AnimatedFormContainer**: Glassmorphism form wrapper with smooth animations
 - **FormInput**: Styled input fields with labels
 - **GoogleButton**: Google OAuth integration button
 
