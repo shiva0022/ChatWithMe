@@ -1,15 +1,17 @@
 'use client';
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useChat } from "@/contexts/ChatContext";
 import { ChatService } from "@/services/chatService";
 import Log from "./Log";
+import ChatHistorySkeleton from "./ChatHistorySkeleton";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { BookOpenIcon } from "@heroicons/react/24/solid";
 
 const Sidebar: React.FC = () => {
   const { data: session } = useSession();
   const { state, dispatch } = useChat();
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   // Load chat history when component mounts
   useEffect(() => {
@@ -20,10 +22,13 @@ const Sidebar: React.FC = () => {
 
   const loadChatHistory = async () => {
     try {
+      setIsLoadingHistory(true);
       const response = await ChatService.getChatHistory();
       dispatch({ type: 'SET_CHAT_HISTORY', payload: response.chats });
     } catch (error) {
       console.error('Failed to load chat history:', error);
+    } finally {
+      setIsLoadingHistory(false);
     }
   };
 
@@ -54,12 +59,16 @@ const Sidebar: React.FC = () => {
       </div>
       
       <div className="flex-1 overflow-y-auto relative [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-[#1a1a1a] [&::-webkit-scrollbar-thumb]:bg-[#a970ff] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#8a4fff] [&::-webkit-scrollbar]:opacity-0 group-hover:[&::-webkit-scrollbar]:opacity-100 transition-opacity duration-200">
-        <div className="flex flex-col gap-1.5 p-3">
+        <div className="flex flex-col gap-1.5">
           {session ? (
-            state.chatHistory.length > 0 ? (
-              state.chatHistory.map((chat) => (
-                <Log key={chat.id} chat={chat} />
-              ))
+            isLoadingHistory ? (
+              <ChatHistorySkeleton count={6} />
+            ) : state.chatHistory.length > 0 ? (
+              <div className="p-3">
+                {state.chatHistory.map((chat) => (
+                  <Log key={chat.id} chat={chat} />
+                ))}
+              </div>
             ) : (
               <div className="text-center text-gray-500 text-sm py-8">
                 <p>No chat history yet.</p>

@@ -5,6 +5,7 @@ import { useChat } from "@/contexts/ChatContext";
 import { ChatService } from "@/services/chatService";
 import { ChatMessage } from "@/types/chat";
 import { ClipboardDocumentIcon, CheckIcon } from "@heroicons/react/24/outline";
+import MessageSkeleton from './MessageSkeleton';
 
 interface ResponseItemProps {
   message: ChatMessage;
@@ -69,7 +70,7 @@ const formatMessageContent = (content: string) => {
         .map((segment, segIndex) => {
           if (segment.startsWith('`') && segment.endsWith('`')) {
             return (
-              <code key={segIndex} className="bg-gradient-to-r from-[#a970ff]/25 to-[#8a4fff]/20 text-[#a970ff] px-2.5 py-1.5 rounded-lg text-sm font-mono border border-[#a970ff]/40 shadow-sm backdrop-blur-sm">
+              <code key={segIndex} className="bg-gradient-to-r from-[#a970ff]/25 to-[#8a4fff]/20 text-[#a970ff] px-1.5 py-0.5 rounded-md text-sm font-mono border border-[#a970ff]/40 shadow-sm backdrop-blur-sm">
                 {segment.slice(1, -1)}
               </code>
             );
@@ -168,6 +169,47 @@ const Responses: React.FC = () => {
   const { state } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Helper function to predict response type based on user's last message
+  const predictResponseType = (): 'short' | 'medium' | 'long' | 'code' | 'list' => {
+    const userMessages = state.messages.filter(m => m.sender === 'user');
+    const lastUserMessage = userMessages[userMessages.length - 1];
+    
+    if (!lastUserMessage || !lastUserMessage.content) return 'medium';
+    
+    const message = lastUserMessage.content.toLowerCase();
+    
+    // Code-related keywords
+    if (message.includes('code') || message.includes('function') || message.includes('script') || 
+        message.includes('program') || message.includes('algorithm') || message.includes('implementation') ||
+        message.includes('debug') || message.includes('syntax') || message.includes('class') ||
+        message.includes('method') || message.includes('variable')) {
+      return 'code';
+    }
+    
+    // List-related keywords
+    if (message.includes('list') || message.includes('steps') || message.includes('options') ||
+        message.includes('examples') || message.includes('points') || message.includes('ways') ||
+        message.includes('methods') || message.includes('tips') || message.includes('features')) {
+      return 'list';
+    }
+    
+    // Short response indicators
+    if (message.includes('yes/no') || message.includes('true/false') || message.includes('what is') ||
+        message.includes('define') || message.includes('meaning') || message.length < 20) {
+      return 'short';
+    }
+    
+    // Long response indicators
+    if (message.includes('explain') || message.includes('describe') || message.includes('detailed') ||
+        message.includes('comprehensive') || message.includes('tutorial') || message.includes('guide') ||
+        message.includes('how to') || message.includes('tell me about') || message.length > 100) {
+      return 'long';
+    }
+    
+    // Default to medium
+    return 'medium';
+  };
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -189,23 +231,11 @@ const Responses: React.FC = () => {
         ))}
         
         {state.isLoading && (
-          <div className="flex justify-start mb-8 animate-fade-in">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#a970ff] via-[#8a4fff] to-[#6a3fff] text-white flex items-center justify-center font-bold mr-4 shadow-lg shadow-[#a970ff]/30 flex-shrink-0 animate-pulse relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
-              <span className="relative z-10 animate-bounce">AI</span>
-            </div>
-            <div className="max-w-3xl p-5 rounded-3xl shadow-xl bg-gradient-to-br from-[#1a0f1f]/70 to-[#2d1b4b]/60 text-gray-100 rounded-bl-lg border-2 border-[#a970ff]/30 backdrop-blur-xl relative overflow-hidden animate-shimmer">
-              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-50"></div>
-              <div className="flex items-center space-x-4 relative z-10">
-                <div className="flex space-x-1.5">
-                  <div className="w-3 h-3 bg-[#a970ff] rounded-full animate-bounce shadow-sm" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-3 h-3 bg-[#a970ff] rounded-full animate-bounce shadow-sm" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-3 h-3 bg-[#a970ff] rounded-full animate-bounce shadow-sm" style={{ animationDelay: '300ms' }}></div>
-                </div>
-                <span className="text-gray-300 text-sm font-medium">AI is thinking...</span>
-              </div>
-            </div>
-          </div>
+          <MessageSkeleton 
+            type="assistant" 
+            responseType={predictResponseType()}
+            showCodeBlock={false} 
+          />
         )}
         
         <div ref={messagesEndRef} />
