@@ -1,7 +1,7 @@
 import { ChatMessage } from '@/types/chat';
 
 export class GeminiService {
-  private static readonly API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+  private static readonly API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
   
   static isConfigured(): boolean {
     return !!process.env.GEMINI_API_KEY;

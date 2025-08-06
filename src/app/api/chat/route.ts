@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { v4 as uuidv4 } from 'uuid';
 import { ModelRouterService, ModelType } from '@/services/modelRouterService';
+import { DatabaseService } from '@/services/databaseService';
+import { authOptions } from '@/lib/auth';
 
 // Fallback AI response function for when Groq is not configured
 async function generateFallbackResponse(message: string): Promise<string> {
@@ -35,7 +37,7 @@ async function generateAIResponse(
   conversationHistory: any[] = []
 ): Promise<{ response: string; model: ModelType }> {
   const chatHistory = conversationHistory.map(msg => ({
-    role: msg.sender === 'user' ? 'user' : 'assistant',
+    role: msg.role === 'user' ? 'user' : 'assistant',
     content: msg.content
   }));
   
@@ -45,7 +47,7 @@ async function generateAIResponse(
 export async function POST(request: NextRequest) {
   try {
     // Get user session
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -54,7 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse request body
-    const { message, chatId, model = 'groq' } = await request.json();
+    const { message, conversationId, model = 'groq' } = await request.json();
     
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return NextResponse.json(
@@ -67,50 +69,82 @@ export async function POST(request: NextRequest) {
     const validModels: ModelType[] = ['groq', 'gemini', 'rag'];
     const selectedModel: ModelType = validModels.includes(model as ModelType) ? model as ModelType : 'groq';
 
-    // Generate unique IDs
-    const userMessageId = uuidv4();
-    const aiMessageId = uuidv4();
-    const currentChatId = chatId || uuidv4();
-    const timestamp = new Date().toISOString();
+    // Find user in database
+    const userEmail = session.user.email;
+    const userId = session.user.id;
 
-    // Create user message
-    const userMessage = {
-      id: userMessageId,
-      chatId: currentChatId,
-      sender: 'user',
-      content: message.trim(),
-      timestamp,
-      user: {
-        name: session.user.name,
-        email: session.user.email,
-        image: session.user.image
-      }
-    };
+    // Create or get conversation
+    let currentConversationId = conversationId;
+    if (!currentConversationId) {
+      const newConversation = await DatabaseService.createConversation(
+        userId,
+        message.trim().substring(0, 50) + '...'
+      );
+      currentConversationId = newConversation.id;
+    }
 
-    // Generate AI response (pass empty history for now - in production you'd load chat history)
-    const conversationHistory: any[] = []; // TODO: Load actual conversation history from database
-    const { response: aiResponse, model: usedModel } = await generateAIResponse(message.trim(), selectedModel, conversationHistory);
+    // Load conversation history for context
+    const conversationHistory = await DatabaseService.getConversationHistory(
+      currentConversationId,
+      userId,
+      10
+    );
 
-    // Create AI message
-    const aiMessage = {
-      id: aiMessageId,
-      chatId: currentChatId,
-      sender: 'assistant',
-      content: aiResponse,
-      timestamp: new Date().toISOString(),
-      model: usedModel, // Include which model was used
-      user: {
-        name: 'ChatWithMe AI',
-        email: 'ai@chatwithme.com',
-        image: null
-      }
-    };
+    // Save user message to database
+    const userMessage = await DatabaseService.addMessage(
+      currentConversationId,
+      userId,
+      message.trim(),
+      'user'
+    );
 
-    // Return both messages
+    // Generate AI response with conversation history
+    const { response: aiResponse, model: usedModel } = await generateAIResponse(
+      message.trim(), 
+      selectedModel, 
+      conversationHistory
+    );
+
+    // Save AI message to database
+    const aiMessage = await DatabaseService.addMessage(
+      currentConversationId,
+      userId,
+      aiResponse,
+      'assistant',
+      usedModel
+    );
+
+    // Return response
     return NextResponse.json({
       success: true,
-      chatId: currentChatId,
-      messages: [userMessage, aiMessage],
+      conversationId: currentConversationId,
+      messages: [
+        {
+          id: userMessage.id,
+          conversationId: currentConversationId,
+          sender: 'user',
+          content: userMessage.content,
+          timestamp: userMessage.createdAt.toISOString(),
+          user: {
+            name: session.user.name,
+            email: session.user.email,
+            image: session.user.image
+          }
+        },
+        {
+          id: aiMessage.id,
+          conversationId: currentConversationId,
+          sender: 'assistant',
+          content: aiMessage.content,
+          timestamp: aiMessage.createdAt.toISOString(),
+          model: usedModel,
+          user: {
+            name: 'ChatWithMe AI',
+            email: 'ai@chatwithme.com',
+            image: null
+          }
+        }
+      ],
       user: session.user,
       modelUsed: usedModel
     });

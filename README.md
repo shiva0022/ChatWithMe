@@ -137,27 +137,34 @@ public/
 - **SearchInput**: Auto-resizing textarea for user input
 - **Responses**: Chat message display with bubbles
 
-## 🔧 TODO - Authentication Integration
+## �️ Database Integration - COMPLETED ✅
 
-The project is structured for NextAuth.js integration. To complete the authentication:
+The project now includes full database integration with Prisma + SQLite:
 
-1. **Install NextAuth**
-   ```bash
-   npm install next-auth
-   ```
+### Features Implemented:
+✅ **User Authentication**: Google OAuth with NextAuth.js  
+✅ **Chat Persistence**: All conversations saved to database  
+✅ **Chat History**: Load previous conversations with context  
+✅ **User Preferences**: Store model preferences and settings  
+✅ **Session Management**: Secure user sessions  
 
-2. **Configure Google OAuth**
-   - Set up Google OAuth credentials
-   - Create NextAuth configuration
-   - Replace placeholder auth functions
+### Database Schema:
+- **Users**: Authentication and profile data
+- **Conversations**: Chat sessions with titles and metadata  
+- **Messages**: Individual messages with AI model tracking
+- **User Preferences**: Customizable settings per user
 
-3. **Environment Variables**
-   ```env
-   NEXTAUTH_URL=http://localhost:3000
-   NEXTAUTH_SECRET=your-secret-key
-   GOOGLE_CLIENT_ID=your-google-client-id
-   GOOGLE_CLIENT_SECRET=your-google-client-secret
-   ```
+### Setup Commands:
+```bash
+# Generate Prisma client
+npm run db:generate
+
+# Push schema to database  
+npm run db:push
+
+# Open Prisma Studio (database GUI)
+npm run db:studio
+```
 
 ## 🎨 Customization
 
@@ -185,7 +192,35 @@ All components are modular and can be easily customized or extended
 - **Code Splitting**: Automatic code splitting for optimal loading
 - **CSS Optimization**: Tailwind CSS with purging
 
-## 📄 License
+## �️ PostgreSQL Database Setup
+
+The project uses **PostgreSQL** for database persistence:
+
+### Quick Start:
+```bash
+# Generate Prisma client
+npm run db:generate
+
+# Create database tables
+npm run db:push
+
+# Open database GUI
+npm run db:studio
+```
+
+### Database Commands:
+```bash
+npm run db:migrate  # Run database migrations
+npm run db:reset    # Reset database (deletes all data)
+```
+
+### Manual PostgreSQL Setup:
+Update `.env.local` with your PostgreSQL connection:
+```env
+DATABASE_URL="postgresql://username:password@localhost:5432/database_name?schema=public"
+```
+
+## �📄 License
 
 This project is licensed under the MIT License.
 

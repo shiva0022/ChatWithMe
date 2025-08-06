@@ -28,12 +28,10 @@ export default function Register() {
     setLoading(true);
 
     try {
-      // TODO: Implement actual registration logic
-      // For now, just simulate a registration
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      alert("Registration successful! Please login.");
-      router.push("/login");
+      // Note: For this demo, we're using Google OAuth
+      // The form fields are for UI completeness, but actual registration
+      // should happen via the Google sign-in button
+      alert("Please use Google Sign In for authentication");
     } catch (err) {
       alert("Registration failed. Please try again.");
     } finally {

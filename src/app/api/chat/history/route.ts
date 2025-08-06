@@ -1,49 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-
-// Mock chat history - in production, this would come from a database
-const mockChatHistory = [
-  {
-    id: '1',
-    title: 'Welcome to ChatWithMe',
-    lastMessage: 'Hello! How can I assist you today?',
-    timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-    messageCount: 2
-  },
-  {
-    id: '2',
-    title: 'JavaScript Questions',
-    lastMessage: 'Sure! A closure is a function that remembers variables...',
-    timestamp: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-    messageCount: 8
-  },
-  {
-    id: '3',
-    title: 'React Best Practices',
-    lastMessage: 'Here are some React best practices you should follow...',
-    timestamp: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
-    messageCount: 12
-  },
-  {
-    id: '4',
-    title: 'API Integration Help',
-    lastMessage: 'To integrate APIs in Next.js, you can use...',
-    timestamp: new Date(Date.now() - 345600000).toISOString(), // 4 days ago
-    messageCount: 6
-  },
-  {
-    id: '5',
-    title: 'Database Design Tips',
-    lastMessage: 'When designing databases, consider normalization...',
-    timestamp: new Date(Date.now() - 432000000).toISOString(), // 5 days ago
-    messageCount: 15
-  }
-];
+import { DatabaseService } from '@/services/databaseService';
+import { authOptions } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
     // Get user session
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -51,16 +14,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // In production, filter by user ID
-    // For now, return mock data
-    const chatHistory = mockChatHistory.map(chat => ({
-      ...chat,
+    const userId = session.user.id;
+    const conversations = await DatabaseService.getUserConversations(userId);
+
+    // Format conversations for the frontend
+    const formattedConversations = conversations.map(conv => ({
+      id: conv.id,
+      title: conv.title,
+      lastMessage: conv.messages[0]?.content || 'No messages',
+      timestamp: conv.updatedAt.toISOString(),
+      messageCount: conv.messages.length,
       userEmail: session.user.email
     }));
 
     return NextResponse.json({
       success: true,
-      chats: chatHistory,
+      chats: formattedConversations,
       user: session.user
     });
 

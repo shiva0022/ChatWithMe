@@ -23,13 +23,10 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // TODO: Implement actual login logic with NextAuth
-      // For now, just simulate a login
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      alert("Login successful!");
-      localStorage.setItem("token", "demo-token");
-      router.push("/");
+      // Note: For this demo, we're using Google OAuth
+      // The form fields are for UI completeness, but actual login
+      // should happen via the Google sign-in button
+      alert("Please use Google Sign In for authentication");
     } catch (err) {
       alert("Login failed. Please try again.");
     } finally {
